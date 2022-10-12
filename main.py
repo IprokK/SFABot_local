@@ -72,7 +72,7 @@ def addnewgroup(message):
 
 def grouptest(message):
     global chat
-    chat = -773955573
+    chat = -814464069
     publ(message)
 
 def here(message):
@@ -399,6 +399,10 @@ def delrating(mes):
             check = rates[0]['rating']-1
             bot.send_message(mes.chat.id, ("Вы сняли пользователю " + surname + " " + name + " 1 балл. Итого общий балл: " + str(check)))
             print("Админ снял пользователю " + surname + " " + name + " 1 балл. Итого общий балл: " + str(check))
+            if rates[0]["rating"] == 1:
+                with connection.cursor() as cursor:
+                    cursor.execute("delete FROM rating WHERE surname = %s and name = %s", (surname, name))
+                    connection.commit()
         else:
             bot.send_message(mes.chat.id, "Ошибка! У пользователя и так нет баллов.")
 
@@ -441,6 +445,18 @@ def vresults(mes):
             mov.append(str(i["surname"]) +" "+ str(i["name"]) +" "+ str(i["rate"]))
         bot.send_message(mes.chat.id, '\n'.join(mov))
 
+def deletech(mes):
+    surname = mes.text.split()[1]
+    name = mes.text.split()[2]
+
+    with connection.cursor() as cursor:
+        cursor.execute("delete FROM rating WHERE surname = %s and name = %s", (surname, name))
+        connection.commit()
+
+    bot.send_message(mes.chat.id,
+                     ("Вы удалили пользователя " + surname + " " + name))
+    print("Админ удалил пользователя " + surname + " " + name)
+
 #Основные команды
 
 #002уточнение:
@@ -482,6 +498,9 @@ def getusermessage(message):
     elif message.text == "результаты" or message.text == "Результаты" or message.text == "РЕЗУЛЬТАТЫ":
         if message.from_user.id == 132969936 or message.from_user.id == 5663898672:
             vresults(message)
+    elif message.text.split()[0] == "удалить" or message.text.split()[0] == "Удалить" or message.text.split()[0] == "УДАЛИТЬ":
+        if message.from_user.id == 132969936 or message.from_user.id == 5663898672:
+            deletech(message)
 
 
 @bot.poll_answer_handler()
