@@ -18,7 +18,8 @@ connection = pymysql.connect(
 print("successfully connected...")
 print(" " * 20)
 
-bot = telebot.TeleBot("5734720458:AAFtu2kCNLjet6k_JXm9hX0f6GIJ2ErR7D0")
+# bot = telebot.TeleBot("5734720458:AAFtu2kCNLjet6k_JXm9hX0f6GIJ2ErR7D0")
+bot = telebot.TeleBot("5576164310:AAE8fjRO0U5lrVl344fS-RwEbG1vweBHoKk") #Для теста
 
 @bot.message_handler(commands=['start'])
 
@@ -501,28 +502,36 @@ def getusermessage(message):
     elif message.text.split()[0] == "удалить" or message.text.split()[0] == "Удалить" or message.text.split()[0] == "УДАЛИТЬ":
         if message.from_user.id == 132969936 or message.from_user.id == 5663898672:
             deletech(message)
+    elif message.text.split()[0] == "Проверка" or message.text.split()[0] == "проверка" or message.text.split()[0] == "ПРОВЕРКА":
+        if message.from_user.id == 132969936 or message.from_user.id == 5663898672:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT ans1 FROM votes WHERE id = 1")
+                rates = cursor.fetchall()
+            bot.send_message(message.chat.id, "Я на месте. Работаю. \n Первый вариант ответа на первый вопрос: "+str(rates[0]["ans1"]), parse_mode='html')
 
 
 @bot.poll_answer_handler()
 def handle_poll_answer(pollAnswer):
     surname = pollAnswer.user.last_name
     name = pollAnswer.user.first_name
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT `rightans` FROM pvotes WHERE vid = %s",(int(pollAnswer.poll_id)))
-        right = cursor.fetchall()
-    if  pollAnswer.option_ids[0] == right[0]["rightans"]:
+    if surname != None and name != None:
         with connection.cursor() as cursor:
-            cursor.execute("SELECT rate FROM quizrate WHERE surname = %s and name = %s", (surname, name))
-            rates = cursor.fetchall()
-            if rates != ():
-                cursor.execute(
-                    "UPDATE quizrate SET rate = rate + 1 WHERE  surname = %s and name = %s", (surname, name))
-                connection.commit()
-            else:
-                cursor.execute(
-                    "INSERT INTO quizrate (surname, name, rate) VALUES (%s, %s, 1)", (surname, name))
-                connection.commit()
-
+            cursor.execute("SELECT `rightans` FROM pvotes WHERE vid = %s",(int(pollAnswer.poll_id)))
+            right = cursor.fetchall()
+        if  pollAnswer.option_ids[0] == right[0]["rightans"]:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT rate FROM quizrate WHERE surname = %s and name = %s", (surname, name))
+                rates = cursor.fetchall()
+                if rates != ():
+                    cursor.execute(
+                        "UPDATE quizrate SET rate = rate + 1 WHERE  surname = %s and name = %s", (surname, name))
+                    connection.commit()
+                else:
+                    cursor.execute(
+                        "INSERT INTO quizrate (surname, name, rate) VALUES (%s, %s, 1)", (surname, name))
+                    connection.commit()
+    else:
+        pass
 
 if __name__ == "__main__":
     bot.polling(none_stop=True)
