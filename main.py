@@ -18,8 +18,8 @@ connection = pymysql.connect(
 print("successfully connected...")
 print(" " * 20)
 
-# bot = telebot.TeleBot("5734720458:AAFtu2kCNLjet6k_JXm9hX0f6GIJ2ErR7D0")
-bot = telebot.TeleBot("5576164310:AAE8fjRO0U5lrVl344fS-RwEbG1vweBHoKk") #Для теста
+bot = telebot.TeleBot("5734720458:AAFtu2kCNLjet6k_JXm9hX0f6GIJ2ErR7D0")
+#bot = telebot.TeleBot("5576164310:AAE8fjRO0U5lrVl344fS-RwEbG1vweBHoKk") #Для теста
 
 @bot.message_handler(commands=['start'])
 
@@ -458,6 +458,54 @@ def deletech(mes):
                      ("Вы удалили пользователя " + surname + " " + name))
     print("Админ удалил пользователя " + surname + " " + name)
 
+def infa(mes):
+    id = mes.text.split()[1]
+
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM votes WHERE id = %s ", (id))
+        rates = cursor.fetchall()
+        if rates != ():
+            a = []
+            if rates != ():
+                for i in rates[0].values():
+                    if i != "NULL":
+                        a.append(str(i))
+            bot.send_message(mes.chat.id, '\n'.join(a))
+        else:
+            bot.send_message(mes.chat.id, "Такого опроса в базе данных не найдено")
+
+def questions(mes):
+    if len(mes.text.split())>1:
+        id2 = int(mes.text.split()[-1])
+        id1 = int(mes.text.split()[-2])
+        a = []
+        for i in range(id1, id2+1):
+            i = str(i)
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT question FROM votes WHERE id = %s ", (i))
+                rates = cursor.fetchall()
+                if rates != ():
+                    text = i +" "+ (rates[0]["question"])
+                    a.append(text)
+                else: continue
+        bot.send_message(mes.chat.id, '\n'.join(a))
+
+def delvot(mes):
+    id = mes.text.split()[1]
+
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM votes WHERE id = %s ", (id))
+        rates = cursor.fetchall()
+        if rates != ():
+            cursor.execute("delete FROM votes WHERE id = %s", (id))
+            connection.commit()
+            bot.send_message(mes.chat.id,
+                             ("Вы удалили опрос номер " + str(id)))
+            print("Админ удалил опрос номер " + str(id))
+        else:
+            bot.send_message(mes.chat.id, "Ошибка! Такого опроса не существует.")
+
+
 #Основные команды
 
 #002уточнение:
@@ -505,9 +553,18 @@ def getusermessage(message):
     elif message.text.split()[0] == "Проверка" or message.text.split()[0] == "проверка" or message.text.split()[0] == "ПРОВЕРКА":
         if message.from_user.id == 132969936 or message.from_user.id == 5663898672:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT ans1 FROM votes WHERE id = 1")
+                cursor.execute("SELECT ans1 FROM votes WHERE id = 2")
                 rates = cursor.fetchall()
             bot.send_message(message.chat.id, "Я на месте. Работаю. \n Первый вариант ответа на первый вопрос: "+str(rates[0]["ans1"]), parse_mode='html')
+    elif message.text.split()[0] == "Вопросы" or message.text.split()[0] == "Вопросы" or message.text.split()[0] == "ВОПРОСЫ":
+        if message.from_user.id == 132969936 or message.from_user.id == 5663898672:
+            questions(message)
+    elif message.text.split()[0] == "Инфа" or message.text.split()[0] == "инфа" or message.text.split()[0] == "ИНФА":
+        if message.from_user.id == 132969936 or message.from_user.id == 5663898672:
+            infa(message)
+    elif message.text.split()[0] == "Удоп" or message.text.split()[0] == "удоп" or message.text.split()[0] == "rmvt":
+        if message.from_user.id == 132969936 or message.from_user.id == 5663898672:
+            delvot(message)
 
 
 @bot.poll_answer_handler()
